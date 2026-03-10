@@ -13,9 +13,6 @@ app.use(compression());
 // app.use(morgan('tiny'));
 //init db
 
-require('./dbs/init.mongodb');
-const {checkOverload} = require('./helpers/check.connect');
-// checkOverload();
 //init route
 app.get('/', (req, res, next) => {
   const strCompress = 'Hello fantips';
