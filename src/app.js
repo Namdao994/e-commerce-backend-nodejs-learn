@@ -12,22 +12,15 @@ const compression = require('compression');
 app.use(morgan('dev'));
 app.use(helmet());
 app.use(compression());
-// app.use(morgan('combined'));
-// app.use(morgan('common'));
-// app.use(morgan('short'));
-// app.use(morgan('tiny'));
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+
 //init db
 require('./dbs/init.mongodb');
 const {checkOverload} = require('./helpers/check.connect');
 // checkOverload();
 //init route
-app.get('/', (req, res, next) => {
-  const strCompress = 'Hello fantips';
-  return res.status(200).json({
-    message: 'welcome fantipsjs',
-    metadata: strCompress.repeat(10000),
-  });
-});
+app.use('/', require('./routes'));
 
 //handling error
 
