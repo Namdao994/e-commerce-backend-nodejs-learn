@@ -1,8 +1,8 @@
 'use strict';
 
 const StatusCode = {
-  OK: 403,
-  CREATED: 409,
+  OK: 200,
+  CREATED: 201,
 };
 
 const ReasonStatusCode = {
@@ -44,4 +44,5 @@ class Created extends SuccessResponse {
 module.exports = {
   OK,
   Created,
+  SuccessResponse,
 };

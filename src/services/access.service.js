@@ -5,7 +5,8 @@ const crypto = require('node:crypto');
 const KeyTokenService = require('./keyToken.service');
 const {createTokenPair} = require('../auth/authUtils');
 const {getInfoData} = require('../utils');
-const {BadRequestError, ConflictRequestError} = require('../core/error.response');
+const {BadRequestError, ConflictRequestError, AuthFailureError} = require('../core/error.response');
+const {findByEmail} = require('./shop.service');
 const RoleShop = {
   SHOP: 'SHOP',
   WRITER: 'WRITER',
@@ -13,8 +14,43 @@ const RoleShop = {
   ADMIN: 'ADMIN',
 };
 class AccessService {
+  /**
+   * 1 - check email in dbs
+   * 2 - match password
+   * 3 - Create AT vs RT and save
+   * 4 - generate tokens
+   * 5 - get data return login
+   */
+  static login = async ({email, password, refreshToken = null}) => {
+    //1
+    const foundedShop = await findByEmail({email});
+    if (!foundedShop) {
+      throw new BadRequestError('Shop not registered');
+    }
+    //2
+    const match = bcrypt.compare(password, foundedShop.password);
+    if (!match) {
+      throw new AuthFailureError('Authentication Error');
+    }
+    //3
+    const privateKey = crypto.randomBytes(64).toString('hex');
+    const publicKey = crypto.randomBytes(64).toString('hex');
+    //4
+    const {_id: userId} = foundedShop;
+    const tokens = await createTokenPair({userId, email}, publicKey, privateKey);
+    await KeyTokenService.createKeyToken({
+      userId,
+      refreshToken: tokens.refreshToken,
+      publicKey,
+      privateKey,
+    });
+    return {
+      shop: getInfoData({fields: ['_id', 'name', 'email'], object: foundedShop}),
+      tokens,
+    };
+  };
+
   static signUp = async ({name, email, password}) => {
-    // try {
     //step 1: check email exists?
     const holderShop = await shopModel.findOne({email}).lean();
 
@@ -75,13 +111,6 @@ class AccessService {
       code: 200,
       metadata: null,
     };
-    // } catch (error) {
-    //   return {
-    //     code: 'xxx',
-    //     message: error.message,
-    //     status: 'error',
-    //   };
-    // }
   };
 }
 
