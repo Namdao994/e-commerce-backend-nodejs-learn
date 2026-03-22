@@ -3,7 +3,7 @@
 const keyTokenModel = require('../models/keytoken.model');
 const {Types} = require('mongoose');
 class KeyTokenService {
-  static createKeyToken = async ({id, publicKey, privateKey, refreshToken}) => {
+  static createKeyToken = async ({userId, publicKey, privateKey, refreshToken}) => {
     try {
       //lv1
       // const tokens = await keyTokenModel.create({
