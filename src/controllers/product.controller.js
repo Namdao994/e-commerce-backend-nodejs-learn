@@ -68,6 +68,13 @@ class ProductController {
       metadata: await ProductService.findProduct({product_id: req.params.id}),
     }).send(res);
   };
+
+  static updateProduct = async (req, res, next) => {
+    new SuccessResponse({
+      message: 'success',
+      metadata: await ProductService.updateProduct(req.body.product_type, req.params.productId, req.body),
+    }).send(res);
+  };
 }
 
 module.exports = ProductController;

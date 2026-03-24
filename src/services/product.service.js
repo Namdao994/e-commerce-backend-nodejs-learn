@@ -10,7 +10,9 @@ const {
   searchProductByUser,
   findAllProducts,
   findProduct,
+  updateProductById,
 } = require('../models/repositories/product.repo');
+const {removeUndefinedObject, updateNestedObjectParser} = require('../utils');
 
 // define Factory class to create product
 
@@ -42,8 +44,13 @@ class ProductFactory {
   static async unPublishProductByShop({product_shop, product_id}) {
     return await unPublishProductByShop({product_shop, product_id});
   }
-  static async updateProduct() {
-    return await searchProductByUser({keySearch});
+  static async updateProduct(type, product_id, payload) {
+    const productClass = ProductFactory.productRegistry[type];
+
+    if (!productClass) {
+      throw new BadRequestError(`Invalid Product Types ${type}`);
+    }
+    return new productClass(payload).updateProduct(product_id);
   }
   //END PUT
 
@@ -105,6 +112,10 @@ class Product {
   async createProduct(product_id) {
     return await product.create({...this, _id: product_id});
   }
+  //update product
+  async updateProduct(product_id, bodyUpdate) {
+    return await updateProductById({product_id, bodyUpdate, model: product});
+  }
 }
 
 // define sub-class for different product types Clothing
@@ -118,11 +129,22 @@ class Clothing extends Product {
     if (!newClothing) {
       throw new BadRequestError('Create new Clothing Error');
     }
-    const newProduct = await super.createProduct();
+    const newProduct = await super.createProduct(newClothing._id);
     if (!newProduct) {
       throw new BadRequestError('Create new Product Error');
     }
     return newProduct;
+  }
+  async updateProduct(product_id) {
+    // remove attr has null and undefined
+    // 2 check xem update o dau
+
+    const objectParams = removeUndefinedObject(this);
+    if (objectParams.product_attributes) {
+      await updateProductById({product_id, bodyUpdate: updateNestedObjectParser(objectParams), model: clothing});
+    }
+    const updateProduct = await super.updateProduct(product_id, updateNestedObjectParser(objectParams));
+    return updateProduct;
   }
 }
 
